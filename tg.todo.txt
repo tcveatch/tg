@@ -1,0 +1,42 @@
+1)*Conceptual foundations, introduction, motivation, definition
+  *Examples, applications
+   Linguist User workflow and manual
+   SQL definition and insert/select code examples
+   JS API on client and server, read/write TGML,RDB,JSON,SQL
+   Browser/Editor spec, code, drafts
+   App example, app dev tools
+   Milestones
+   HTMLify or MDify docs.
+   Onto GitHub
+
+2) JS on client and server.  SQL/MySQL vs MongoDB vs NoSQL?
+   JS suggests MEAN  MongoDB, Express.js, Angular.js, and Node.js.
+   Angular is great for information flow in the UI.
+   Node implementing server
+
+3) Do you happen to know if YouTube has an API for playing segments of
+   video, without popping up their ads, under code control?
+
+   TV: Firefox will generate an event every frame. Chrome/IE/Opera
+       every 200 or 250ms.
+
+4) I found a dict.org thing at the GNU project, and I think they have
+   gone obsolete, but dictionary lookup might sure be better into the
+   cloud, so why not. Dictionaries, indeed a universal omnilingual
+   dictionary database table structure and cloud-based storage and
+   access system, are something to be thinking about.  Any thoughts?
+
+   TV: Maybe take it over and use it within a derived-tier-generator
+       algorithm.
+
+5) Is there such a thing as ancient-script-learning OCR I can get my
+   hands on and train up without being an expert?  ?
+
+6) Does docinfo call out for improvements?
+   character encodings per tier? DG: Let all be utf-8.
+   Default display methods per URL locator type? TV: define them in the browser.
+
+7) Am I stupid for not just going to the feet of the AG project and
+   learning all their wise lessons?  Bird's NLTK, I read over
+   recently, a bit of it, which was inspiring. Python, I guess.
+     TV: maybe!

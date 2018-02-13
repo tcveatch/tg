@@ -1,0 +1,723 @@
+   		    Translation Graph Definition
+			 by Tom Veatch, 2018
+
+A Translation Graph is definable in multiple interconvertible forms,
+for various purposes, including:
+
+(A) Mathematically: as a certain type of set-theoretic object.
+
+(B) TGML: in one or more text files using a translation graph markup
+    language, TGML, for long-term storage.  
+
+(C) DB: in a set of structured database tables, for server-side processing
+    and access
+
+(D) JSON: in a JSON encoded data structure, for transmission
+
+(E) JS: in a set of populated data structures created and manipulated in
+    JavaScript or other implementation language, for client-side and
+    other processing.
+
+These are given in order below.
+
+
+----------------------------------------------------------------------
+			(A) Mathematical Form:
+----------------------------------------------------------------------
+
+A well-formed Translation Graph or "Document" is an 5-tuple
+{C,Types,Tiers,N,A,L} with C, a set of (document names or) classes;
+Types, a set of (tier or data) types; Tiers, a set of tiers; N, a set
+of contentless nodes, and A, a set of labelled arcs; and L, a set of
+labels.
+
+Classes are the title and other names and properties of the document
+or its tiers.  A document has at least one class, its name or title. A
+tier inherits the classes of the document of which it is a part but
+may have classes of its own.  A set of classes applying to tiers can
+show the hierarchy or other structure of relationships among related
+but different documents, such as different translations, recieved
+versions, renditions.  Unlike the Annotation Graph formalism, here it
+is not required that one tier represent the unique primary document.
+If two or more tiers share a given class (and all within a TG share
+its name class), the nodes shared by the tiers represent the
+sequential structure of that shared class.  A hierarchy of classes
+and their progressively refined segmentations emerges from this.
+
+Types are the data types and perhaps methods of access or display
+associated with a tier, for example, 'Roman alphabet encoded Words in
+Hindi' or Roman_sentences or youtube video segments, etc.  A type of a
+tier applies to the content of every arc in that tier.
+
+Contentless Nodes and optionally content-bearing Arcs are vertexes and
+edges of a directed acyclic graph comprising the document.
+
+A document has a single first node and a single last node, which are
+the first and last nodes of every tier.  (Thus, each Tier exhausts,
+or is the same length as, the entire document.)
+
+A document contains one or more tiers.  Each tier comprises a subset
+of the nodes and of the arcs, with the constraint that within a tier
+there is a unique total ordering of all nodes in the tier from first
+to last.
+
+Every Arc links a single predecessor node to a single successor node.
+The content of each Arc is an empty or non-empty Label or string,
+which may contain arbitrary data.
+
+Every Tier contains a single path of alternating nodes and arcs from
+the first to the last node: No branching within Tiers.  (This
+constraint may prove impractical and be removed later, but seems
+helpful to begin with, for reasoning about TGs.  Obviously this is not
+a minimized graph structure, which implementations may potentially
+derive.)
+
+It follows that within a Tier, the number of Nodes minus one is the
+number of Arcs. 
+
+
+----------------------------------------------------------------------
+                 (B) Translation Graph Markup Language
+----------------------------------------------------------------------
+Summary:
+  * A TGML document defines a TG and comprises one or more text
+    files each containing a header, and one or more tiers within
+    optional <TGML>..</TGML> tags.
+  * Classes are specified in <head class="..."> tags.
+  * A tier and its types are specified in <tier type="..">..</tier> tags.
+  * Nodes within a tier are enumerated with <node..>tags.
+  * Arcs within a tier are enumerated with <arc..>..</arc> tag pairs.
+  * Labels are simply the content arcs between <arc>..</arc> tag pairs.
+
+Discussion:
+
+  The "in" specified in a <TGML in=".."> tag is used to specify the
+  list of file names or URIs that the TG is to be found in.  A
+  wellformed TG can incorporate a pre-existing TG without modifying
+  the latter by specifying the latter's file name, along with its own
+  file name in the in=".." tag specifier (a comma separated list of
+  file names).  In parsing a TG from TGML starting from a given file,
+  the list of files it is in is expanded by unification with other
+  in=".."  tags in the various files referenced, starting with the
+  initial file. If inconsistency of naming or segmentation is
+  discovered, an error should be thrown and the inconsistency fixed by
+  the author(s).
+  
+  Headers specify the classes of the document. The headers of a single
+  TG, which may be distributed tier by tier across multiple TGML
+  files, must all share the document name/title/id and may share or
+  not share other document classes.  Headers may also refer to other
+  files in the TG.  A TG file without them is interpreted with two
+  default classes: first the document title class, which defaults to
+  the file name itself, and second the document author class, which
+  defaults to the file owner's user name, if one is provided by the
+  operating system, or "anonymous" if not.  A header is specified by a
+  single <header ..> tag with an optional </header> tag.  class=".."
+  may be specified within the header tag, where .. is a
+  comma-separated list of key:value pairs, where each key defines a
+  kind of classification of the document, and the associated value
+  defines the particular classification of that kind.
+  
+  Each tier specifies one or more types applicable to the entire tier,
+  followed by a tier body.
+
+  Multiple tiers may be specified overlappingly ("simultaneously")
+  with multiple mutually including initial and final <tier..> and
+  </tier> tags so long as the tier bodies use all the same nodes in
+  the same order, and there is one arc for each tier linking each
+  adjacent pair of nodes. (T T N A A N A A N A A /T /T suggests the
+  pattern.)
+  
+  If <tier..>..</tier> tags are not found, then the entire file
+  remainder is considered as a single tier with tier name tn=0.  If no
+  type is specified explicitly in a <tier type="..."> tag, then
+  type="ref:auto,charset:utf-8" is inferred.
+
+    Note: ref:auto is intended to mean that the data in the label,
+        instead of being interpretable as references to other things,
+        simply refers to itself, or is auto-referential.  This is a
+        fancy way of saying the characters represent themselves; the
+        text represents itself; the content is automatically there;
+        you don't need to get it from somewhere else that the content
+        references.  If instantiated by a program that goes and gets
+        the content referred to by the data in an arc, well, that
+        program can simply stick in the very content itself, as the
+        referenced data.
+
+  Other tier types may guide the interpretation of arc content.  For
+  example, ref:http means the arc content is a URI concatenatable with
+  http:// to create a URL which when accessed will deliver the content
+  to be inserted for that arc.  Similarly, ref:file means the arc
+  content is a file name.
+
+     Note: an example referring to http://youtube.com/aaaaaaaa is:
+
+       <tier type="ref:http"><node>youtube.com/aaaaaaaa<node></tier>
+
+  The tn of a tier is its name, which may be a number, which is
+  identically given in all the arcs of the tier.
+
+  The tier body is a first node (if absent, then <node nn=0> is
+  inferred, though nn can be any string) followed by a sequence of
+  optionally content-bearing arcs marked for that tier, and
+  contentless nodes possibly also occurring in other tiers, ending
+  with a last node.
+
+    Note: If unnamed the last node is named -1 by default.  -1 is
+        used because the largest integer of a given unsigned numeric
+        data type is often a bit pattern that means -1 in the
+        corresponding signed numeric data type.)
+
+    Note: node names are strings and may contain numeric strings.  A
+        naming convention uses the linguistic boundary symbol, #,
+        before or after the name of an adjacent arc.  Thus #a1 is the
+        node preceding arc a1, while a1# is the node after arc a1.
+
+  Thus a plain text file without any tags for TGML, header, tier,
+  nodes, or arcs is equivalent to the following explicit markup, with
+  $variables reconstituted in the obvious way.
+  
+  <TGML in="$filename.txt">
+   <header class="title:$filename.txt,author:$username">
+   <tier tn=0 type="ref:auto,charset:utf-8,sep:''">
+    <node nn=0>
+    <arc t=0 P=0 S=-1>
+     $file_contents
+    </arc>
+    <node nn=-1>
+   </tier>
+  </TGML>
+  
+  Each node is a <node> tag with optional node name, nn=".." item(s)
+  giving the node's name(s), each of which is unique within the entire
+  document.  No </node> is expected (will be ignored), since nodes
+  span no content.  If nn=".." is not given, a parsing system will
+  construct a unique node name string, and no segmentation boundary
+  shared across tiers at that point is implied.  Nodes on different
+  tiers with the same name are the same node; that is, shared naming
+  of nodes across tiers is the way shared segmentation is encoded.  If
+  no shared node name is explicitly given, no sharing is to be
+  inferred; whereas, if a node name appears in two tiers, then the
+  arcs after it and the arcs before it in those tiers share an
+  alignment of preceding or following segmentation boundaries,
+  respectively.  Nodes may be named by numbers or string names,
+  including multiple comma-separated names.  Consistent renaming of
+  nodes preserves the shared segmentation structure, but might
+  obliterate theoretical distinctions: One or another linguistic
+  theory may demand specific multiple segmentation namings such as
+  word boundary, sentence boundary, etc.  Although the constellation
+  of segmentation points organizing all the content in all the tiers
+  would remain constant under a node renaming operation, the
+  significance of a node as both sentence boundary and word boundary,
+  for example, could be lost unless the node name retained that
+  information, as exemplified in <node nn="#w25,#s3">, which would be
+  a way to name a node that precedes word 25 and at the same time
+  sentence 3.  If a node has multiple names, which may show up
+  independently in various tiers, that node is the same node no matter
+  its name.  If it has been declared to have multiple names by those
+  names occurring, comma-separated in a node name string, those
+  different node names for it are simply synonyms from the perspective
+  of TGML node structure; the node named is a single node. 
+
+  A node may have any number of predecessor and successor arcs, up to
+  the number of tiers, (in case it is shared across all the tiers),
+  except the start and end nodes have zero predecessors and successors
+  respectively.  A live data structure may deterministically construct
+  a list of the predecessor or successor arcs of a node but in TGML
+  the association of arc with node is done on the arc where the
+  association is one to one, by the labelling of P and S nodes in
+  arcs.
+  
+  Each arc must have one P (predecessor) and one S (successor) node,
+  and lives on one or more tier(s) as named by the tier name tn="..", and
+  may have zero or more arc names, where each arc name must be unique
+  within the tier.  An arc may be given in an implicit or explicit
+  form. An arc may be re-used on another tier by adding the other tier
+  name to the arc.
+
+  There are some subclasses of arcs: implicit, explicit, referring, 
+  derived (by merging not split), and empty arcs.
+
+* An implicit arc is an arc constructed during the parsing of a TGML
+  Tier upon encountering one node followed by arbitrary content,
+  comprising zero or more characters of text, followed by another
+  node: the Arc is constructed to receive a unique, created name or
+  number; its tier is the one being parsed; its predecessor and
+  successor are the preceding and succeeding nodes; and its content is
+  the content occurring between the nodes.
+
+* An explicit arc, by contrast, is defined with explicit information
+  elements in an <arc> tag, and may or may not be given in the text of
+  the file in the order implied by the P and S node names in the
+  explicit tag, which override the textual ordering.  The tier name if
+  unspecified within an explicit arc defaults to the tn of the enclosing
+  <tier>..</tier>.
+
+* A referring arc, A, is an arc which has the information in it needed
+  to replace it with a dereferenced arc or arc/node sequence, whose
+  content is defined as the join of the contents of a sequence of arcs
+  between A's start node, #A, and end nodes, A#, on another compatible
+  tier which also shares A's start and end nodes.  It refers to the
+  content by tier and node names, thus:
+  
+  <arc tn=$thist an=$thisa fromt=$tiername joinc=',' P=$P S=$S></arc>
+
+  If joinc is '' or unspecified, then the arcs from $P to $S are
+  copied into the referring/receiving tier, using the same nodes. If
+  joinc is specified as a nonempty string, then a single arc replaces
+  A. The literal construction of the arc's contents seems entirely
+  optional; a constructor would insert the join, using the joinc
+  string, of the contents of the other tier's arcs from #A to A# into
+  a replacement arc with the same name, tier, predecessor and
+  successor nodes.
+  
+  Therefore, to edit parts of a document into a different order, just
+  create a new tier with referring arcs for the moved sections, which
+  can be deferenced from the arcs in the un-reordered tier.  This lets
+  you skip creating an entire copy; a little indexing data does the
+  whole job. 
+ 
+* A (merger-) derived arc is an arc derived by algorithm from a
+  sequence of arcs on a named (source) tier spanning from the derived
+  arc's start node and its end node which nodes of course need to be
+  on both tiers. Exemplified as:
+
+  <arc t=$derivedtier P=$P S=$S fromt=$sourcetier by="join(' ')"></arc>
+
+  This asserts that in the $derivedtier, the contents of the
+  $sourcetier would be taken between the same nodes, all the
+  intermediate nodes removed and their arc labels joined into a single
+  arc label string by a join() operation on space.  (joinc=" " could
+  replace the requirement of a JavaScript integration here implied by
+  by="join(' ')".)
+
+------ Start Footnote: ------
+A merging derivation is one kind of thing, a splitting
+derivation another. fromt=$tn and by=$function provide for merging
+derivation from a sequence of arcs to a single merged arc.  A
+splitting derivation process might be expressed in code by telling the
+code to take a given tier and make another derived from it by
+splitting it, say, on space, or end of sentence or using a
+morphological analyser to split on morpheme boundaries, etc.  The
+space of such algorithms includes as subsets the space of
+morphological analysis, syntactic parsing, and as such cannot be
+expected to be simple, though "split on space" is simple enough that
+TGML could imaginably, though non-transparently, be twisted into a
+form that it could do something like this:
+  
+     <node nn=100>
+     `generate_arcs_and_nodes(fromt,100,101,"a100.","n100.")`
+     <node nn=101>
+
+If TGML were extended to understand backquotes as execution contexts
+and arbitrary function calls, such as what a JavaScript integration
+might provide, then a TGML parsing system could look at tier fromt
+from node fromnode (here, 100) to node tonode(here, 101) constructing
+nodes and arcs to go into the current tier with names constructed by
+prepending arcnameprefix (here "a100.") to arc names 0,1, .. and
+prepending nodenameprefix (here "n100.") to node names 0,1, ..  and
+with arc contents constructed by whatever algorithm is given in the
+generate_arcs_and_nodes() function.  That way a seemingly adjacent
+pair of nodes can be specified to have a sequence of arcs and nodes
+between them, generated by a splitting process from the data in the
+other tier between those nodes.  It could be as simple as split(" ")
+to divide the content up based on space characters, but I say just
+write a simple segmenter in that case, and keep it out of the TGML
+definition.  For now.
+
+------ End Footnote: ------
+
+* Finally, an empty arc may also be useful especially in partial
+  translations/annotations.  Thus,
+
+  <tier type="Veatch Comments"><node nn=10>blablabla<node nn=11></tier>
+
+  may be filled in with empty (contentless) arcs between start and end
+  nodes and the given annotation (i.e., from 0 to 10 and 11 to -1).
+  This lets us maintain the concept that every tier shares the same
+  start and end nodes, if only trivially and by courtesy since the
+  non-empty content of the tier is in the middle somewhere.  A
+  different specification for TGs might instead enable tiers to start
+  and end in the middle and not share the requirement of
+  document-global start and end nodes.  We can wait to see if that
+  would be better or not; for now we have a way to do something
+  roughly equivalent, and indeed more general since empty arcs after
+  all can be interior arcs as well as initial & final arcs in a tier.
+  Also if a tier can start and end anywhere, then a simple lookup is
+  turned into a potentially large search problem.
+
+Further work:
+  
+  TGML being a file format, it would be convenient to have a parser to
+  verify, and possibly (offer to) correct, the required properties of
+  a well-formed, valid TGML file.  For example, if two arcs claim the
+  same tier and the same predecessor node, there is an error, since
+  each tier is a single sequence of arcs and nodes.  A TGML editor
+  could be written perhaps as an EMACS mode or perhaps within a web
+  browser.
+
+
+----------------------------------------------------------------------
+                             (C) DB
+----------------------------------------------------------------------
+
+TGs in the Database world have a life cycle.  A set of tables are
+constructed following the structure below.  Raw files or TGML encoded
+TGs in files may be parsed and INSERTED into the TG tables.  UIs may
+call for, as well as modify and update, or delete, data from the TG
+tables via SELECT, JOIN, SORT, etc. operations.  Typically there will
+be a server-side SQL engine taking requests from a client UI, making
+the appropriate SELECT requests, packaging up the results as JSON, and
+sending that to the client for display, reference, editing, etc. As
+worked on, a TG may develop more and more tiers.
+
+Language and translation resource data can be derived from TG data and
+provided to support the learner; SQL structures and protocols for this
+are closely related and needed.
+
+SQL TABLE structure for representing a set of TGs follows:
+
+--------------------
+TABLES
+	MEMBERS
+--------------------  
+docs
+	id: integer primary key
+	name/title: text
+	author: text
+	URL: text
+	// content: text  NONOJESUS
+	// checksum: text (MD5 of content)
+	
+classes // (can name/classify docs and tiers with this as also via name/author, types, etc.)
+	// This creates a classification structure within the tiers of the document.
+	id: integer primary key
+	doc_id: integer foreign key to docs(id)    
+	tier_id: integer foreign key to tiers(id)  // 0 means none, i.e., a doc class
+	key: text (such as "date of publication", or "LG")
+	value: text (such as "February 6, 2018" or "en")
+
+tiers
+	id: integer primary key
+	doc_id: integer foreign key to docs(id)
+
+tiertypes 
+	// Specify interpretation and data handling methods for tiers.
+	tier_id: integer foreign key to tiers(id)
+	// type: text // e.g. file http direct mp4 video audio 32khz 16bit
+	key: text  // e.g., method mediatype rate fileformat sourcetier derivationmethod
+	value: text // e.g. http   video     30hz mp4        $tn        lookup(L2,L1,$data)
+
+nodes
+	idx: integer primary key
+	id: text
+ 	doc_id: integer foreign key to docs(id)
+	// offset: integer NONOJESUS.
+	// predarcs: NO, derive that from arc information
+	// succarcs: NO, derive that from arc information
+
+ 	// A node is not a pointer referring to a text offset,
+	// but an anchor that the content arcs refer to.  Nodes are the
+	// primary data in a TG, along with their sequential
+	// pattern as realized in the structure of arc linkages between them.
+	// Text and content are hung on this primary structure, not the reverse.
+
+arcs
+	id: integer primary key
+	name: text
+	doc_id: integer foreign key to docs(id)
+	tier_id: integer foreign key to tiers(id)
+	pred_id: integer foreign key to nodes(id) // no other arc in the same doc+tier can have the same pred_id
+	succ_id: integer foreign key to nodes(id) // no other arc in the same doc+tier can have the same succ_id
+        data: text (utf-8)
+	       data is parseable according to the arc's tier's types.
+	       It is a sequence of zero or more identifiers encoded as utf8 text
+	       If type is "auto", data is read directly as the sequence of characters themselves.
+	       Or it can be a delimited sequence of references according to
+	       the tier's type, such as id's of lemmas, wordtypes, wordtokens,
+	       or URIs or other references to outside content.
+	       If prefixed with an access method like http: or file: etc.,
+	       and suffixed by access data such as a URI, the method must be
+	       consistent (redundant) with the tier's types.
+
+----  a useful SQL table set for processing monolingual language data: ----
+
+lemmas -- one row per distinct lexical element (dictionary entry)
+  id
+  pos -- part of speech
+  citation -- orthographic string representing the "citation form" for the lemma
+  ... -- other stuff as needed
+
+wordtypes -- one row per distinct word form or space-separated punctuation string in the corpus
+  id
+  orth -- character string; how this word/punt type appears in text
+  -- the remaining fields apply only to word forms (not free-standing punctuation):
+  lemma_id -- integer foreign key to lemmas(id)
+  type_label -- morphological categorization
+  type_segs -- morphologically segmented rendering of the orthographic form (optional)
+  ... -- other stuff as needed
+
+wordtokens -- one row per space-separated token in the corpus
+  id
+  type_id -- integer foreign key to types(id)
+  doc_id -- integer foreign key to docs(id)
+  seqno -- relative position of the token within the doc
+  prev_punc -- punctuation string (if any) attached at beginning of orthographic word
+  foll_punc -- punctuation string (if any) attached at end of orthographic word
+
+----  Multilingual data: ----
+
+Incidentally, dictionary.org provides a protocol for storage and
+access of dictionary data.
+
+This section is a placeholder for SQL or other systems for collecting
+language translation data from a growing corpus of worked-up TGs into
+dictionaries, concordances, references to audio & video, etc.
+
+Citation phonetics and phonology are provided to the learner in
+integrated but separate presentation, available any time relative to
+the symbols of the script.  Pronunciation tutorials are accessed by a
+menu item found by selecting a character in a tier of that language.
+Fast speech and dialect phonetics are learned by reading phonological
+or citation-form transcripts associated with segmented audio.  Once
+the learner sees the words in their strange but given L2 order and
+with the grammatical tags plus explanations of the tags, they can put
+together the syntax options and interpretations themselves; only a
+little explicit instruction might be needed to assert syntax
+requirements that aren't obvious from positive examples.
+
+But mainly, the learner uses TGs and TG-derived data resources to
+approach L2 through word based learning. (I use "word" loosely.)  A
+word in L2 corresponds to a list of words in L1, all those that it has
+been translated as.  There may be an inferrable core meaning that
+explains the many L1 options, in context; the learner is encouraged to
+pull out and remember that core as the meaning of a somewhat
+untranslatable L2 word.  A word translation can also include some
+grammatical tags like 3rd Person Singular or 3Sg so that the grammar
+can be understood.  There may be a bunch of contexts in which it
+occurs in L2, in text, audio, and video, which might be of interest
+and helpful to the learner to solidify their understanding of its
+meaning and usage by seeing it used in various contexts.  A learning
+system should keep track of all these different kinds of
+correspondences or translation relationships, and be able to present
+them effectively at appropriate times, so the learner can integrate
+these different kinds of knowledge into their own growing L2
+competence.
+
+TG-related software capturing all this would need types for each tier
+specifying the tier's language, perhaps as a hierarchy, up to include
+language family, and down to include dialect or for that matter
+speaker/actor.  We would also like to collect, store, and make
+accessible the translations implied by the correspondence of
+translation tiers.  If L1 and L2 tiers both contain a given pair of
+nodes, then the corresponding content in the two tiers has a
+translation relationship.  The minimum corresponding segment pair
+would be typically the unit of study.  If words, the correspondence
+can be copied into a dictionary store.  If sentences, it might be
+useful in building concordances.  In two languages, corresponding
+sentences will have different word ordering; the mapping between the
+words does not respect ordering.  Thus an interlinear glossed
+translation (IGT) at the word level is not commutative; translating
+from L2 to L1, the IGT presentation retains the word order of the L2
+form, while inserting L1 glosses plus grammatical tags. It could be
+worth the effort to build an IGT in one direction but not in the other
+direction, and a learner might have to make do.  Constructing a
+similar result in the other direction tags L1 not L2 forms, and uses
+L1 not L2 word ordering.  If a grammatical tagger is built for each
+language, it may then be easy to go both ways.  We have work and
+leverage here for linguists, each word translated becomes a dictionary
+entry; each dictionary entry becomes an offered translation for each
+word to be translated; other summary statistics are also to be
+updated, and machine translation and other models depending thereon
+periodically recalculated.
+
+----------------------------------------------------------------------
+                             (D) JSON
+----------------------------------------------------------------------
+
+JavaScript Object Notation as a form for a TG is exemplified below.
+JSON is convenient for storage and transmission of individual
+documents and tiers, such as between server and client.  A client may
+request a segment of a TG based on a set of node names between which,
+in the different tiers, content is requested, and the JSON form is able
+to equally represent such multi-tier segments and entire TGs.
+
+/* an example of a tg in JSON, representing a poem, "Tom lvs Liz" with
+ * a segmentation thereof into words
+ */
+tg = { // array of tier names, array of arrays of named arc objects, named-array of nodes
+    header: [ title: "A Poem",
+       author: "Tom Veatch",
+       nTiers: 2,
+       read_encoding: "utf-8",  // a default to be minimally used; captures ASCII files. 
+       write_encoding: "utf-8", // consider using UTF-32 internally and for writing.
+       tiernames: [ "Words", "Sentences" ],
+       baseurl:   "https://tomveatch.com/tg/"
+       tierlocs:  [ "poem.tg#words", "poem.tg#sentences" ]
+    ],
+    // p for predecessor, s for successor.
+    arctiers: [ // Should arcs be numbered or tiernamed or both? both, consistently, after renumbering.
+	// arc names are sortable only within tiers: no total ordering across tiers.
+	{   "t0.a0": {txt:"Tom",p:"A",s:"B"},
+ 	    "t0.a1": {txt:"lvs",p:"B",s:"C"},
+	    "t0.a2": {txt:"Liz",p:"C",s:"D"}
+	},
+	{   
+	    "t1.a0": {txt:"Tom lvs Liz",p:"A",s:"D" }
+	}
+    ],
+
+    // here each node contains a list (one per tier) of preds and
+    // successor arcs.  Note that in TGML the nodes do not need to name
+    // their P and S arcs, since they may be implicit, and the arcs do
+    // that work, but in JSON or other fully-realized data structures the
+    // referencing is worked out explicitly since it may be convenient to
+    // be able refer either direction between connected arcs and nodes.
+    nodes: {
+	"A": {p: ["",""],           s: ["t0.a0","t1.a0"] },
+	"B": {p: ["t0.a0",""     ], s: ["t0.a1",""     ] },
+	"C": {p: ["t0.a1",""     ], s: ["t0.a2",""     ] },
+	"D": {p: ["t0.a2","t1.a0"], s: [""     ,""     ] }
+    }
+}; 
+
+----------------------------------------------------------------------
+                              (E) JS
+
+         (Try to maintain consistency between theory and code)
+----------------------------------------------------------------------
+
+A TG may also be realized in active computer memory in the form of a
+set of populated data structures, created and manipulated in
+JavaScript or other implementation language, for client-side or other
+processing.  A software library with convenient functions to
+read/write/traverse/modify a TG would be helpful.
+
+Sample JS code to create and initialize/serialize various TG data
+objects follows:
+
+function At(from[],to[]) { // "At" a span: nodes define start/end within each tier.
+    this.p[] = duplicateArray(from[]);
+    this.s[] = duplicateArray(to[]);
+}
+
+function Arc(label,p,s,content) {
+    this.label=label;
+    this.p=p;
+    this.s=s;
+    this.content=content;
+    this.writeArc = function() {
+	print this.content;// we can assume arcs print only between the nodes they are At
+    }
+    this.readArc = function() {
+	// we should know the previous Node,
+	// we should parse through into the next Node, so that we also know that Node.
+	// then assign
+	label = "t$i.a$j";
+	p = prev node label;
+	s = succ node label;
+	content = read content up to "<node" or EOF,pushing that back into the read buffer;
+    }
+}
+
+function Node(nodes,label,n,p[],s[]) {
+    this.label=label;
+    this.p[]=p[];
+    this.s[]=s[]; // n elements in these arrays, one for each of TG.docinfo.nTiers tiers.
+    this.writeNode = function() {
+	print "<node nn=\"label\">";
+    }
+    this.readNode = function(tierN) {
+	// in <n 1>arctxt<n 2>, reading <n 1> we must store it for the following arc,
+	// also we might get called for pre-reading <n 2> while setting up that arc.
+	// we should pre-parse through into the next Node, so that we also know that Node.
+	// Here we have to keep the tier straight
+	scanf("<node nn=%s>",label);
+	nodes[label].p[tierN] = the previous arc label;
+	nodes[label].s[tierN] = the successor arc label;
+	// also we don't know where we are in the node array until we pull out the id label,
+	// with which we can index to the right node's p[] and s[] properties.
+    }
+}
+
+function TG(title,author,nTiers) {
+    this.arctiers = []; // array of tiers, each being an associative array of arcs
+    this.nodes = {};    // associative array of nodes, each with preds/succs for each tier
+    this.docinfo = { "doctitle": title,
+	       "author": author,
+	       "nTiers": nTiers,
+	       "encodings": [],
+ 	       "tiernames": [],
+               "tierlocs":  []
+    };
+    this.specifyTier = function (tierName,tierLoc,tierEncoding) {
+	if (tierName === undefined) tierName = "unstructured";
+	if (tierLoc === undefined)  tierLoc  = "file:tg.txt";
+	if (tierEncoding === undefined)  tierEncoding  = "utf8"; // could map to UTF-32 on read
+	this.tiernames.push(tierName);
+	this.tierlocs.push(tierLoc);
+	this.tierencoding.push(tierEncoding);
+    };
+    this.copyTier = function(i) {
+	nt = this.docinfo.nTiers++;
+	at = this.arcTiers[nt] = duplicateArray(this.arcTiers[i]);
+	for (n in this.nodes) { n.s.push(""); n.p.push(""); }
+	for (a in at) {
+	    this.nodes[a.p].s[nt] = a.key; 
+	    this.nodes[a.s].p[nt] = a.key;
+	}
+    };
+    this.serialize = function(io) {
+	if (io==="read") {
+	    baseTier = empty(this.nodes)?true:false;
+	    for (i=0;i<this.docinfo.nTiers;i++) {
+		open the tierLoc for reading as tierEncoding,
+		ok=ok&&n=readNode(); // expect <node nn="$nn">
+		if (ok && baseTier) { this.firstNode = n; }
+		while (ok) {
+		    ok=ok&&readArc(); // expect any text until <node nn="$nn">
+		    ok=ok&&n=readNode(); // expect any text until <node nn="$nn">
+		}
+		if (ok && baseTier) { this.lastNode = n; }
+		// confirm the final node is the global final node.
+	    }
+	} else { // assume io==="write"
+	    writeDocInfo(this.docinfo);
+	    for (i=0;i<this.docinfo.nTiers;i++) {
+		open the tierLoc[i] for writing as tierEncoding[i],
+		arcaa = this.arcTiers[i];
+		nodes = this.nodes;
+		nn=this.firstNode; // node name
+		writeNode(this.nodes.nn);
+		while (ok && an=this.nodes.nn.s[i]) { // node has a successor in this tier.
+		    ok = ok && arcaa.an && nn = arcaa.an.s;
+		    ok = ok &&  writeArc(arcaa.an);
+		    ok = ok && writeNode(nodes.nn);
+		}
+	    }
+	    if (nn === this.lastNode) { print("All is good. ran out of arcs at the end.\n"); }
+	    else { print("Error, last node name " + nn + "!=" + this.lastNode + ".\n"); }
+	}
+    }
+    
+    }
+}
+
+function writeDocInfo(docinfo) {
+    write to output file
+	    '<tg title="'
+		. i.doctitle . '" author="'
+		. i.author . '" nTiers='
+	        . i.nTiers . ' encodings="'
+	        . i.encodings.join(',') . '" tiernames="'
+	        . i.tiernames.join(',') . '" tierlocs="'
+	        . i.tierlocs.join(',') . '">\n'
+	    ;
+};
+
+It would be convenient, certainly, to have JS code that reads/writes
+TGML, JSON, and SQL, such that a TG in any one format can be converted
+into any other, and back again, and such code can be tested by making
+sure the information and structure survive transcoding in each
+direction.
+

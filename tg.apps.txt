@@ -1,0 +1,636 @@
+		  Translation Graph Markup Language
+			      Applications
+			 by Tom Veatch, 2018
+
+Automatic and manual methods, either or both, can reasonably be
+used to operate on and use Translation Graphs.
+
+Reasonable operations would include segmenting, arc-labelling,
+translating, linking to segment pronunciations' audio files, etc.
+
+An initial formatter might for example:
+	* add begin/end nodes.
+	* optionally make the implicit arc explicit: 
+          a single arc with that whole document's text as its label.
+
+A segmenter might:
+
+	* select an arc of a specified type with a complex label
+
+	* split the label into sequential or simultaneous components
+          of a second specified type
+
+	* add nodes between sequential components and add arcs
+          labelled with the respective components.
+
+	* this segmentation process could be iterated over all arcs of
+          a given type in the file.
+
+	* manual or automatic methods could be done.  
+
+		* for example an automatic segmentation could be done
+		  in a script-teaching application, where each letter
+		  in the script gets its own arc of type "letter" and
+		  is parallel to ("simultaneous" with) an arc
+		  referring to a teaching resource for that letter
+		  (e.g., IPA or Roman equivalent, audio form)
+
+		* or a document could be manually segmented with aid
+                  of emacs macros &c.
+
+A dictionary-connector might:
+
+	* add arcs of a "dictionary-index" type parallel to and
+	  between the same node endpoints for arcs whose labels are
+	  found in a dictionary lookup.  (e.g., if a hash or other
+	  index could save repetitious dictionary lookup of additional
+	  word instances in a document).
+
+A word-by-word, phrase-by-phrase, or sentence-by-sentence translator might:
+
+	* add a new type and charset to the header.
+
+	* add arcs of that type parallel to each word, phrase, or
+          sentence arc, each with contents being the
+          word/phrase/sentence's translation.
+
+	* here "translation" may mean a mapping into any other
+	  linguistic level, for example, translate orthographic
+	  Sanskrit (where graphemes are derived from both words at a
+	  word boundary) to sequences of (separated, "underlying")
+	  morphemes.
+
+A parameterizeable display system might:
+
+	* read and parse one or more TG files, constructing a
+          (probably not very human-readable) TG data structure
+          internally as a set of nodes with labels and arcs of various
+          types between the segment-anchoring nodes.  (Note that
+          overlapping chunks as for example in non-agglutinative
+          languages may require multiple nodes at a finer level of
+          representation, with arcs covering more than a single
+          node-to-node segment.  One node preceding the first
+          influence of a later form, and another following the last
+          influence of the previous form.)
+
+	* display the types available in a configuration UI for selection.
+
+	* display the selected types in a linguistics-style,
+          multilinear, tabular display, comprising 
+
+		* a line in the table for each selected type
+
+		* links on selected types leading to a selected alternate type
+
+		  * e.g., click on a word in the word line to hear the
+  		    audio of the word not shown in the text display
+  		    but referenced in the TG as an audio arc
+  		    corresponding to that word arc.  
+		  * or e.g., click to pop up and choose from a
+  		    menu of alternative data types available
+
+	* Implementation could be via PHP or JavaScript mapping TG
+          files to HTML with the intended UI functionalities.
+          Dictionary lookup might be to a cloud located globally
+          shared perhaps many-language resource.  Video access might
+          be to YouTube or other (universally) accessible video
+          document store.
+
+An editing system might:
+
+	* display a selected subset of the TG's types in multilinear
+          tabular form
+
+	* provide for creation of a new type, with the header <type>
+	  tag and with arcs optionally exhausting the document
+	  (comments don't, translations do) and with a derived-from
+	  type for automatically generating a first-draft set of arcs
+	  of the new type.
+
+	* provide a line in the multilinear tables for entering
+          translations (data for that new type) parallel to a selected
+          other type.  It should have a charset, input method, and
+          display font.
+
+	* provide means of inserting nodes, e.g., for a click on a
+	  character to be interpreted as inserting a new boundary node
+	  before it and inserting arcs of the current type on its left
+	  and right.
+
+	* provide for automatic pre-filling of arc contents via some
+	  perl-ish substitution s/// mapping from another type (e.g.,
+	  orthography to phonology by some rule system)
+
+	* provide for editing boundary locations (deleting and adding)
+	  (e.g., if automatically inserted in the wrong place)
+
+A language-teaching system might:
+
+	* select a parameterization for the display system,
+
+	* drive the user's reading through the system via highlighting
+	  displayed text bits (e.g., bouncing-ball) simultaneous with
+	  playback.
+
+	* do a read-aloud game.  Have a layer of arcs for L2 ASR
+	  grammar resources, highlight the next after the previous
+	  succeeds (or doesn't).
+
+	* Ask the user what s/he wants to learn.  
+		* to learn an alphabet, provide:
+
+			* links within text
+
+			* bouncing-ball read-aloud one letter at a
+                          time
+
+	 	* to read content with translations shown only of some
+                   selection of new words/morphemes (e.g. randomly
+                   selected at a certain percentage or frequency in
+                   the text, or selected by a teaching algorithm based
+                   on a model of the user's knowledge level which
+                   could be maintained by the system at a fine or
+                   gross level or configurable by the user also at a
+                   fine or gross level)
+
+			* bouncing-ball read-aloud one word at a time
+			* needs sub-sententially-aligned audio arcs
+			* enable an isolated-word pronunciation mode
+			  via dictionary pronunciation audio arcs or
+			  via reference to a carefully pronounced
+			  rendition of the text.
+
+		* to learn isolated-word vs vernacular-conversational
+                  pronunciation
+
+
+		  A Context of Application
+
+An extended example might be helpful to see utility in this quite
+abstract system presentation.  Consider a context of historical
+document preservation such as being carried out by the Muktabodha
+Indological Research Institute which is saving disintegrating,
+family-stored document archives from oblivion.  They have discovered
+in India ancient palm leaves covered with hand-copied historical texts
+being misused and often in bad condition, and they are committed to
+preserving these resources.
+
+For MIRI, the first step (after fundraising, hiring, training,
+advertising and networking, locating, persuading, travelling,
+unpacking, and setting up the equipment), the first step is the
+scanning of the found materials.  From this a primitive TG could be
+produced as simply a sequence of scan filenames in a text file.  After
+slight processing, it could be reformatted into a proper TG file with
+head, type, class, body, node, and arc tags in which the relevant TG
+layer type might be "original_scan_jpeg", and a sample node id might
+be "Hejamadi_Sanjeeva_Kunder_box_3_scan_3209" and an arc immediately
+after that node a filename reference to the particular scan.  (If
+order of the pages scanned relative to one another is not known, then
+both start and end nodes could be given for a floater, and empty arcs
+specified as entering from 0 or leaving to -1.)  An upcontrasted image
+set could be integrated into the TG formatting by adding another TG
+layer with type "contrast+120_scan_jpeg" with arcs referring to
+separate, corresponding image files.  In this way, workflow can be
+carried out and tracked and reintegratable in TG layer files.
+
+Although readable in their direct image form to specialists, these
+scans then need to be processed into something useful for the rest of
+us.  Does this situation suggest Translation Graphs? I hope so.  
+
+So for example, passes made by improving purpose-trained OCR systems
+over the images might produce a lot of segmentations for example, top
+down into line_areas, string_areas, char_areas, feature- or
+glyph-stroke areas with their extracted parameters, and then bottom up
+into probability- or confidence-weighted character/word/morph
+hypotheses (perhaps multiple "simultaneous" hypotheses for a given
+single area, or multiple overlapping areas).
+
+A human-edited OCR transcription might be derived from the above,
+copied and reviewed, and approved after editing by a competent editor,
+with hypotheses confirmed/deleted/modified and content
+added/subtracted/changed as well as segmentation endpoints moved or
+removed or added or multiplied where the OCR produced bad
+segmentation.  Obviously more work produces better results, and many
+drafts each provide their separate TG layer of translation of the now
+multiplying forms or glimpses of a theoretical, implied, underlying,
+intended document that the author of these ancient, perhaps
+disintegrating palm leaves bequeathed to us in that form.
+
+Such an edited transcription might then be built onto as added TG
+layers on the same document:
+
+  * transliterated from its perhaps obscure script into a more
+    accessible script such as devanagari or Roman
+  * translated word by word into dictionary references or 
+  * referenced to a growing concordance
+  * translated at a line/word/paragraph level to some L1 (type L1,
+    charset ..., class doc_name author...)
+  * rendered into audio by a reader, thence recorded into a digital
+    file, made accessible to the system, and linked to by assigning
+    segments of audio to start/end node spans.
+
+In short, scan them, then build up what you have into parsed,
+understandable TG documents readable by all.  With the constellation
+of tools and operations described here, it is imaginable that
+ultimately any interested human could access and penetrate, could with
+minimal, if large, efforts, learn to read in the original, these
+preserved archives.  And the same systems could be used to provide
+teaching access to learners of a target language through movies in
+that language, suitably supported by transcriptions and dictionaries
+and translations, all displayed and prompted into the viewer's
+attention so that learning and understanding can be made as effortless
+as possible.
+
+
+-----------------------------------------------------------------------
+
+Sometimes a differentially carefully spoken rendition might be a tier.
+The more renditions, the better, indeed, since translations are so
+variable.
+
+According to Dave Graff, back in the 2000's, a corpus of news
+reporting in Chinese or Arabic, translated into English, 10x, produced
+results that were always different!  Only a rare short sentence came
+out the same across translators.  Word choice, word order,
+pronominalization, all different, all reactions by natives were
+different.  Usually not very significant but frequent and subtle.
+Everyone has their own take.
+
+Now, the purpose here is the data and interfaces to support a
+language-teaching, or language-learning-supportive, browser.
+
+Of course machine learning in multiple iterations has its role to
+play.  Based on initial work by a linguist, the machine learning
+algorithms will improve their transductions to preliminarily populate
+added tiers.  Then linguists will improve the machine-generated
+drafts.  Then the machines will continue learning.  Presented with a
+gray box for a word proposed by algorithm, a human decider could click
+it to see alternatives or type (or push a button and speak aloud) to
+enter a new one, and select a correct form, which the algorithm will
+learn from and use to continue to improve its hypotheses in that tier.
+
+Machine learning can help partially automate segmentation, lookup,
+translation, also vocabulary sorting, based on frequency, to help
+decide what learners should learn first, etc.
+
+The resulting picture here is a workflow encompassing an ongoing
+process of sustained translation into another language.  One step
+might be called "transcribe": Convert jpegs to an ordered sequence of
+bounding boxes, then to characters by OCR, then correct those
+classifications by human, feeding that back into the OCR.  Another
+step does morpheme translation, simultaneously with dictionary
+construction.  A dictionary process that feeds labels learned so far,
+forward, would start labelling unlabelled words.  The dictionary is
+not fixed but is a process, a growing and living dictionary.  As Dave
+says, 80% of words may have no ambiguity but the other 20% will be 80%
+of the work.  Multiply ambiguous, highly context dependent, related to
+Zipf's law.  A long tail of infrequent words which are relatively
+clear, and very rare words which may be quite unknown.  In this
+workflow toolset, human users will label and work away until achieving
+some kind of critical mass making it useful to others.
+
+Dave: Building the browser is going into a different direction from
+archiving.  Archiving with the raw source material and
+analysis/translation is just the bare facts.  Then mediating to a
+learner/reader is more: a tool that serves as an instructor, carrying
+on an ongoing dialog with the individual to know what they got out of
+it, how comfortable are you with this?
+
+Tom: Have an apple tv remote control that you can click when you don't
+understand something in the recent history of the current media
+playback; if it's media annotated with this kind of data, and the
+remote understands the meaning of the click as "Explain that to me",
+then the video can pause, an IGT be displayed, and the user can browse
+until they learn what they want, and click onward to continue.
+
+Dave: Useful in teaching learners is an intelligent use of
+concordances.  Just consider the vocabulary building issue, the
+biggest issue in language learning is vocabulary access.  Once you
+have a database, with occurrences of each word, for each word, show
+them all in context with all the conjugated forms of it, maybe you
+could expand with a ruleboook and a grammar and go further, but the
+actual contextualized found forms tell so much.  The concordance is
+crucial.  
+
+Consider learner support for an utterance-sized bit of linguistic data
+in the form of a two-way IGT from LS (language of source) to LT
+(target language, reader's language) back to LS, each direction
+comprising several tiers including morphemic analysis, word-level
+translations, and full translations.  Enable tagging/editing by
+permitted contributors such as (a) a linguist, and (b) the author or
+even (c) an interested person, to mark errors, questionables, or
+introduce to corrections at suitable layers.
+
+Provide concordances for one or more items in the structure and enable
+concordance of others by a menu operation on the item.
+
+Dave: Apply this to multi-lingual Twitter feeds.  People who want to
+understand the L2 twitter data (and authors who want to be understood)
+might contribute a lot of data checking and editing to such a system.
+Getting the community usefulness going, after some critical mass is
+achieved, with live dictionaries, live algorithms, and humans
+involved, it could become quite useful to all.
+
+Tom: I want anyone to go into an L2 situation and be maximally
+supported to learn and understand what they don't know.  This is far
+more ambitious than the Star Trek universal translater.  It applies
+equally to multi-lingual Twitter, to foreign watchers of previously
+unsubtitled English movies, to audio concordances for learning dialect
+features, to archiving and study of ancient religious texts, to any
+form of language whether textual audio or video that is of interest to
+the point it is worth doing the work on it to make it accessible to
+another language.  Put an app into your iPad and watch the TV with it,
+when it recognizes a place in the film where someone has made a
+tutorial out of it, the app provides for the user to click a button
+and see and go through an IGT to learn -- on the iPad, if the TV isn't
+smart enough to show it on the TV.  Or have it be knowledgeable about
+you enough to pause and give you a translation of something it thinks
+will be helpful to you, once in a while.  And you can click ? here or
+there as a question about what did that mean, and it can help.  Even
+partly understanding native speakers can use similar controls over
+presentation of the Translation Graphs to turn the subtitles on and
+off.
+
+-------------------------------------------------------------------
+After a request for a translation of a paper I wrote into French:
+
+I imagine providing a web UI for crowdsourcing translation tasks,
+exposing, to begin with, some tiers of the original document as
+document, sections, paragraphs, sentences, words.  Then I imagine
+populating some added, French tiers with Google translate data.  I
+guess one could only see a sentence or two at a time within the UI;
+that's fine to begin with.  The underlying data form would be: tiers
+in different files. Emacs would do as an editor to convert higher
+level segments to finer grained segments. Then some background
+processes would populate the French tier by doing Google Translate
+robo-requests.  Another might cut the TGs in the files into bits and
+pump them into the MySQL database, so that various forms thereof could
+be accessed using various SQL queries, like SELECT...JOIN...  Next a
+web UI in HTML probably enhanced with JavaScript or other DataTable
+system, some kind of editable, displayable, automatically populatable
+tables, to show and provide for editing/correction/entry of various
+tiers.  The editing process, when a change is made in some box of the
+table, would trigger code to send changes not to a text file formatted
+as a Translation Graph, but to the MySQL database storing
+correspondences suggested by the user.  A table saying,
+French_sentence_by_Google maps to French_corrected_sentence with a
+column in the table for the contributing user's ID. More tables for
+dictionary entries.  Etc.  Maybe the UI allows a click to expand a
+part where the translation seems queer to the reader, offering that as
+a filter on the automatic translations, so readers can pick out queer
+bits and just fix them, and meanwhile read on.
+
+Now, why didn't I notice that the segmentation of words in French is
+not consistent in ordering with the segmentation of words in English,
+when the word order is different.  I suppose that's okay.  Or is it?
+IGTs use a base language, the language of the linguist, for the
+morphemic translations, but given in the observed sequence of the L2
+morphemes.  Then the base language morphemes are scrambled from that
+ordering to a base language phrase or sentence translation. Then if
+you build it the other way around, the scramblings won't match up. But
+perhaps the phrases/sentences will, at a higher level.  Some aspect of
+ordering will remain, and that's what the TG node structure will
+expose.  And the correspondences will work, but by matching longer
+segments together between two shared boundaries, rather than by
+directly corresponding in order at the smaller-segment level.  Perhaps
+some language of permutation could be encoded in the graph so that
+word correspondences could be directly read out of it.  Meanwhile,
+not.
+
+-------------------------------------------------------------------
+Consider an example workflow:
+
+* Create document
+
+  <tier><IMG file="IsopanisadImage.jpg"></tier>
+
+* Block out as 5 lines or paragraphs, so far without content
+
+  <tier>[#p1][#p2][#p3][#p4][#p5][p5#]</tier>
+
+* (Perhaps apply image processing or OCR to create some intermediate
+  forms to focus and support manual transcription.)
+  
+* Fill in the paragraphs (here as Roman character glyphs encoded as
+  ASCII but use your own charset & editor/text entry method):
+
+  <tier>
+ [#p1]Om puurnam adah puurnam idam
+ [#p2]puurnaat puurnam udachyate
+ [#p3]purnasya puurnam aadaayaa
+ [#p4]purnam eva vashishyate
+ [#p5]Om shaanti shaanti shaanti
+ [p5#]
+  </tier>
+
+* Segment into "words"
+
+  <tier>
+ [#p1][#w1]Om[#w2]puurnam[#w3]adah[#w4]puurnam[#w5]idam[w5#]
+ [#p2][#w6]puurnaat[#w7]puurnam[#w8]udachyate[w8#]
+ [#p3][#w9]purnasya[#w10]puurnam[#w11]aadaayaa[w11#]
+ [#p4][#w12]purnam[#w13]eva[#w14]vashishyate[w14#]
+ [#p5][#w15]Om[#w16]shaanti[#w16]shaanti[#w17]shaanti[w17#]
+ [p5#]
+  </tier>
+
+* Segment inflectional morphemes
+
+  <tier>
+ [#p1][#w1]Om[#w2]puurn[#m1]am[#w3]adah[#w4]puurn[#m2]am[#w5]idam[w5#]
+ [#p2][#w6]puurn[#m3]aat[#w7]puurn[#m4]am[#w8]udachya[#m5]te[w8#]
+ [#p3][#w9]purn[#m6]asya[#w10]puurn[#m7]am[#w11]aat[#m8]aayaa[w11#]
+ [#p4][#w12]purn[#m9]am[#w13]eva[#w14]vashishya[#m10]te[w14#]
+ [#p5][#w15]Om[#w16]shaanti[#w16]shaanti[#w17]shaanti[w17#]
+ [p5#]
+  </tier>
+
+* Enter dictionary entries:
+   L1: Sanskrit.  L2: English
+   om -> om
+   puurn# -> whole, complete, perfect
+   #am -> nom.sg.
+   #aat -> ablative
+   #asya -> genitive
+   #aayaa -> subjunctive
+   adah -> that
+   idam -> this
+   eva -> only   
+   vashishi -> remain
+   #ate -> present
+   udachi -> arise
+   shaanti -> peace
+   
+* Populate morpheme translation tier automatically from dictionary
+  <tier>
+ [#p1][#w1]Om[#w2]whole,complete,perfect[#m1]nom.sg.
+      [#w3]that[#w4]whole,complete,perfect[#m2]nom.sg.
+      [#w5]this[w5#]
+ [#p2][#w6]whole,complete,perfect[#m3]ablative
+      [#w7]whole,complete,perfect[#m4]nom.sg.
+      [#w8]arise[#m5]pres.[w8#]
+ [#p3][#w9]whole,complete,perfect[#m6]genitive
+      [#w10]whole,complete,perfect[#m7]nom.sg.[#w11]abl.[#m8]subj.[w11#]
+ [#p4][#w12]whole,complete,perfect[#m9]nom.sg.[#w13]only
+      [#w14]remain[#m10]pres.[w14#]
+ [#p5][#w15]Om[#w16]peace[#w16]peace[#w17]peace[w17#]
+ [p5#]
+  </tier>
+
+* Manually select dictionary entries from the list given in a context.
+  The display should show words with multiple entries in a highlighted
+  form with a menu representing the options, and making the
+  transcriber's job easier to select the preferred option.
+
+  <tier>
+ [#p1][#w1]Om[#w2]perfect[#m1]nom.sg.
+      [#w3]that[#w4]perfect[#m2]nom.sg.
+      [#w5]this[w5#]
+ [#p2][#w6]perfect[#m3]ablative
+      [#w7]perfect[#m4]nom.sg.
+      [#w8]arise[#m5]pres.[w8#]
+ [#p3][#w9]perfect[#m6]genitive
+      [#w10]perfect[#m7]nom.sg.[#w11]abl.[#m8]subj.[w11#]
+ [#p4][#w12]perfect[#m9]nom.sg.[#w13]only
+      [#w14]remain[#m10]pres.[w14#]
+ [#p5][#w15]Om[#w16]peace[#w16]peace[#w17]peace[w17#]
+ [p5#]
+  </tier>
+
+* Manually translate from translated morphemes to English phrasing:
+
+  <tier>
+ [#p1][#w1]Om.[#w2]That is perfect.
+      [#w4]This is perfect[w5#]
+ [#p2][#w6]From the perfect
+      [#w7]The perfect arises[w8#]
+ [#p3][#w9]From the perfect
+      [#w10]If the perfect is taken[w11#]
+ [#p4][#w12]The perfect, only, remains[w14#]
+ [#p5][#w15]Om!
+      [#w16]Peace!
+      [#w16]Peace!
+      [#w17]Peace![w17#]
+ [p5#]
+  </tier>
+
+* Automatic editing procedures (such as emacs macros or eLisp functions)
+  should be made available and easily invoked to:
+
+   * construct or add to dictionary the words not presently found therein.
+
+   * carry out segmentation of words, inflectional morphemes, etc. using
+      some expanding/trainable ruleset, into a new tier.
+
+   * copy a tier to be a new tier (pick from an inventory, enter new tier name)
+
+   * substitute within a tier per dictionary mappings
+
+   * enable text editing, click to select a segment, control-+ to
+     expand to influce the next segment, type to replace the selection
+     with new text.
+
+ * Multi-tier editorial display should be provided, to see other tiers while
+   editing a tier.
+
+ * Presentation for learning may be computer controlled based on a
+   model of the reader/learner's knowledge, or manually parameterized.
+   Anyway we now have data to support the learner.
+
+   A map to the meanings of the grammatical encodings like "abl"
+   (ablative, 'away from'), "subj" (subjunctive, 'possibly') should be
+   a click away.
+
+   A map to a concordance for any morpheme should be a click away.
+
+   A map to an IPA reference and to a pronunciation guide and script
+   description should be a click away.
+
+   An audio format where the text is performed in a recording with a
+   bouncing ball display should be a click away.
+
+   All this may be hidden and the image/video/audio media
+   (dis-)played, with the display of all tiers or a parameterized,
+   selected subset, a click away during playback when the audience is
+   puzzled and wants to understand the part they just heard but didn't
+   understand.
+   
+-----------------------------------------------------------------------
+
+I had a vision while sleeping, evidently fitfully, of translation
+scholars as being like Uber drivers, and this system scaled into to
+the cloud to support cloud-published documents, as like Uber.  Multi
+use publication model though rather than single use service model, of
+course.  But I short it is sort of enabling a craft industry of
+translators, who would get paid by the readership based on use.
+
+
+Naturally there will be a popularity contest effect where desired
+content will pay certain scholars more, a very few a very great deal
+more, and obscure languages, worse yet double obscure language pairs,
+will see insignificant use therefore insignificant income to the craft
+linguists doing the translations.  But still a market is powerful in
+getting what people want created, and virtuous obscurities can be paid
+for by virtue-funding patrons and sponsors.  Anyway a supporting
+system like this which makes the job both of active translators and of
+the learners accessing the L2 content so much easier, will support the
+maximum and fastest possible proliferation of translations just by the
+power of ease of content creation in it.
+
+Because it seems the lowly translator has not got enough of their due.
+They are paid their stipend or pittance by the publisher, as an
+overhead of their main publication business for their minor L2 market,
+and the state of translations of all things is poor weak, hidden,
+inaccessible, underproliferated.  Maybe a general way to monetize the
+translators labors would change that.
+
+At the same time, translation as here being creation of content for
+learnability, in a way reduces the translator/linguist's long term
+power, significance, and position since pretty soon lots of others
+know that language and once learned they don't need that learning
+content any more and they can understand L2 in its own form with out
+the translator's support.
+
+There are various ramifications.  But I think we are heading in a
+virtuous direction.
+
+A question that is coming soon: if baseline documents are just URLs,
+perhaps locked and stored, and TGs an overlay from a different cloud
+service, with learners using the TG UI to access that content more
+easily.  Versus a developed TG for a given audience and language pair,
+self-published in a TG form.  The former tends toward SAAS and the
+latter towards freely available internet standards such as a
+definition of TGML.  I think both are required but the mix is unclear.
+JS UI code and modified browsers, probably some mix of open source and
+proprietary to keep some advantage for a supervised market.
+
+The best would be whatever enables the most active market of tech
+enabled and enabling craft linguists creating content that pays them
+the most by teaching the most to the most. SAAS seems to win on this
+front.  Not inconvenient that an RDB be involved.  So perhaps this has
+the chance to become an internet startup.
+
+On the other hand perhaps this is all old tech inside s MT division
+and we have nothing.  Whatever, it needs to go just to save some
+Sanskrit documents, and also I need to see the world through this lens
+because I'm so frustrated that I don't understand every single
+language when I hear it!
+
+Indeed an ultimate target is live tech, where people use an L2 access
+and learning appliance to explore the world.  Maybe it will reside in
+earplugs -- for auditory learners!
+
+For visual learners it will be JS enhanced web browsers with a cloud
+service to provide learnability to increasing fractions of the L2
+world.
+
+For action based learners, what do we offer?  There is a concept of
+shared performance of a play, a family or troupe downloads a shared
+play or document, and perhaps not phy is ally Co-present but as
+orchestrated by some TGish system, each takes t heir turn an records
+into the document their part.
+
+Or the TG UI can demand interactivity from the user, to learn what
+they know.  Repeat and get some phonetic training for your accent,
+etc.  A world of things here.
+
