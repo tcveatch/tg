@@ -10,4 +10,4 @@
 //   delete a node merging adjacent arcs on all the tiers it belongs on
 //   edit (add, delete, overwrite at cursor) content of an arc, resetting view around point with each character entered
 //   with cursor inside content of an arc, insert a node splitting arc ito two at cursor
-//   Add a tier, specify its name and characteristics
+//   Add a tier, specify its name and characteristics, associate a data entry method for its arcs
