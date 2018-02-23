@@ -1,5 +1,8 @@
 // JavaScripting Translation Graphs
-// (c) Tom Veatch, 1/2/2018
+// (c) Tom Veatch, 1/2/2018, 2/22/2018
+//
+// Spec, sample code for creating TG objects, sample JSON.
+//
 //
 // ********Things we want to do in TGs:*********
 //
