@@ -2,6 +2,7 @@
 // (c) Tom Veatch, 1/2/2018, 2/22/2018
 //
 // Spec, sample code for creating TG objects, sample JSON.
+// For general information on TGs see the wiki at github.com/tcveatch/tg
 //
 //
 // ********Things we want to do in TGs:*********
