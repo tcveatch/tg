@@ -1,4 +1,5 @@
 # Create tables to store Translation Graphs
+# For general information about TGs read the wiki at github.com/tcveatch/tg
 
 CREATE TABLE IF NOT EXISTS docs (
 	# A document represents a translation graph.
