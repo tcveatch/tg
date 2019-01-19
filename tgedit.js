@@ -1,4 +1,5 @@
 // editor for Translation Graphs
+//   TGs are introduced in the wiki at github.com/tcveatch/tg
 
 // open/close/rename/delete TG
 // hold a TG
