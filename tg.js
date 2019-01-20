@@ -111,13 +111,40 @@
 //   nodes in the global node space, and the relations are to be made evident in the At span
 //   rather than read up the node's tier-applicability array.
 
-//
 
+// Objects in TG include: Doc, Class, Tier, Type, Arc, Node, Label
+// Let's build them up with Object constructor functions 
+// somewhat like this typical syntax:
+//   var ObjName = function(arg,args=defaultvals..) { 
+//        this.key=argsvals;.. 
+//	this.MethodName=function(){}; 
+//   };
+//
+// There are two incompatible early drafts of some of these below so if you 
+// are in a coding mood please go through and fix them up in a better union.
+
+// a Label is the name of an arc, typically the 
+// dotted concatenation of a tier id and an arc 
+// id sequentially within the tier, as in for example, 
+// "t2.a32", the 32nd arc on the 2nd tier in this document
+var Label = function(l="") { 
+    this.l: l
+}; 
+
+// A Node is the end of a predecessor arc or arcs, and the start of zero or more successor arcs
 // 
-function At(from[],to[]) { // "At" a span: nodes define start/end within each tier.
-    this.p[] = duplicateArray(from[]);
-    this.s[] = duplicateArray(to[]);
-}
+var Node = function (/*Label*/ l, /*Arc[]*/p[]=Empty Array, /*Arc[]*/s=EmptyArray) { 
+    this.label=l; this.p[]=duplicateArray(p[]); this.s[]=duplicateArray(s);
+};
+var Arc = function (/*Label*/ l, /*Node*/ p, /*Node*/ s, /*Content*/ c) {
+    this.label=l; this.predecessor=p; this. successor=s; this.content=c;
+};
+var Type  = function () {}; // needs work...
+var Tier  = function() {};
+var Class = function() {};
+var Doc   = function() {};
+
+var TG    = { "Doc": .. };
 
 function Arc(label,p,s,content) {
     this.label=label;
@@ -221,6 +248,20 @@ function TG(title,author,nTiers) {
     
     }
 }
+
+// a possibly convenient function to describe the set of arcs with a certain alignment
+// that is, covering a certain span.  Since some arcs are longer than others, they might
+// start or end in different places, but if they cover a single span in the middle somewhere
+// then they are all the arcs "At" (or simultaneous with) the given span. 
+// Incidentally the span picked out by an At object is the minimum span therein,
+// if inclusion relationships can be established between arc pairs of different tiers.
+function At(from[],to[]) { // "At" a span: nodes define start/end within each tier.
+    this.p[] = duplicateArray(from[]);
+    this.s[] = duplicateArray(to[]);
+}
+
+
+
 
 function writeDocInfo(docinfo) {
     write to output file
